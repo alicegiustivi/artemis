@@ -15,14 +15,27 @@ async function getUserProfile(supabase: any): Promise<Profile | null> {
   return profile;
 }
 
-async function getPhaseContent(supabase: any, phase: string): Promise<PhaseContent | null> {
+async function getPhaseContent(supabase: any, phase: string): Promise<{ energy: string; nutrition: string; movement: string } | null> {
   const { data } = await supabase
     .from('phase_content')
     .select('*')
-    .eq('phase', phase)
-    .single();
+    .eq('phase', phase);
 
-  return data;
+  if (!data || data.length === 0) return null;
+
+  const content: { energy: string; nutrition: string; movement: string } = {
+    energy: '',
+    nutrition: '',
+    movement: ''
+  };
+
+  data.forEach((row: any) => {
+    if (row.category === 'energy') content.energy = row.content;
+    if (row.category === 'nutrition') content.nutrition = row.content;
+    if (row.category === 'movement') content.movement = row.content;
+  });
+
+  return content;
 }
 
 function generateCalendarStrip(lastPeriodDate: string, cycleLength: number): CalendarDay[] {
