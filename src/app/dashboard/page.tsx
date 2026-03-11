@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase';
 import { getPhaseForDate } from '@/lib/phases';
-import { Profile, PhaseContent, CalendarDay } from '@/lib/types';
+import { Profile, CalendarDay } from '@/lib/types';
 
 async function getUserProfile(supabase: any): Promise<Profile | null> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -23,12 +23,7 @@ async function getPhaseContent(supabase: any, phase: string): Promise<{ energy: 
 
   if (!data || data.length === 0) return null;
 
-  const content: { energy: string; nutrition: string; movement: string } = {
-    energy: '',
-    nutrition: '',
-    movement: ''
-  };
-
+  const content = { energy: '', nutrition: '', movement: '' };
   data.forEach((row: any) => {
     if (row.category === 'energy') content.energy = row.content;
     if (row.category === 'nutrition') content.nutrition = row.content;
@@ -49,9 +44,7 @@ function generateCalendarStrip(lastPeriodDate: string, cycleLength: number): Cal
   for (let i = 0; i < 14; i++) {
     const currentDate = new Date(startDate);
     currentDate.setDate(startDate.getDate() + i);
-    
     const phaseData = getPhaseForDate(lastPeriodDate, cycleLength, currentDate);
-    
     calendar.push({
       date: currentDate,
       phase: phaseData.phase,
@@ -69,9 +62,9 @@ export default async function DashboardPage() {
 
   if (!profile) {
     return (
-      <main>
-        <h1>Welcome to Artemis</h1>
-        <p>Please complete your profile to see personalized recommendations.</p>
+      <main style={{minHeight: '100vh', backgroundColor: '#12100E', color: '#F2EDE8', padding: '40px 24px'}}>
+        <h1 style={{fontFamily: 'var(--font-display)', color: '#8B3A2A', fontSize: '48px'}}>Welcome to Artemis</h1>
+        <p style={{marginTop: '16px', opacity: 0.8}}>Please complete your profile to see personalized recommendations.</p>
       </main>
     );
   }
@@ -82,59 +75,53 @@ export default async function DashboardPage() {
   const calendarStrip = generateCalendarStrip(profile.last_period_date, profile.average_cycle_length);
 
   return (
-    <main>
-      <h1>Welcome to Artemis</h1>
-      
-      <section>
-        <h2>Current Phase: {currentPhaseData.phase}</h2>
-        <p>Day {currentPhaseData.dayInCycle} of your cycle</p>
-      </section>
+    <main style={{minHeight: '100vh', backgroundColor: '#12100E', color: '#F2EDE8', padding: '40px 24px'}}>
+      <div style={{maxWidth: '600px', margin: '0 auto'}}>
 
-      {phaseContent && (
-        <section>
-          <h2>Today's Recommendations</h2>
-          <div>
-            <h3>Energy</h3>
-            <p>{phaseContent.energy}</p>
-          </div>
-          <div>
-            <h3>Nutrition</h3>
-            <p>{phaseContent.nutrition}</p>
-          </div>
-          <div>
-            <h3>Movement</h3>
-            <p>{phaseContent.movement}</p>
-          </div>
-        </section>
-      )}
+        <div style={{marginBottom: '48px'}}>
+          <p style={{fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.15em', opacity: 0.6, marginBottom: '8px'}}>
+            Day {currentPhaseData.dayInCycle}
+          </p>
+          <h1 style={{fontSize: '48px', fontFamily: 'var(--font-display)', color: '#8B3A2A', textTransform: 'capitalize', lineHeight: 1.1}}>
+            {currentPhaseData.phase} Phase
+          </h1>
+        </div>
 
-      <section>
-        <h2>14-Day Calendar</h2>
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto' }}>
+        {phaseContent && (
+          <div style={{display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '48px'}}>
+            {(['energy', 'nutrition', 'movement'] as const).map((cat) => (
+              <div key={cat} style={{backgroundColor: '#1C1916', padding: '24px'}}>
+                <p style={{fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.15em', color: '#8B3A2A', marginBottom: '8px'}}>
+                  {cat}
+                </p>
+                <p style={{fontSize: '18px', fontFamily: 'var(--font-body)'}}>
+                  {phaseContent[cat]}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{display: 'flex', flexDirection: 'row', overflowX: 'auto', gap: '12px'}}>
           {calendarStrip.map((day, index) => (
-            <div
-              key={index}
-              style={{
-                border: day.isToday ? '2px solid black' : '1px solid #ccc',
-                padding: '8px',
-                minWidth: '60px',
-                textAlign: 'center',
-                backgroundColor: day.isToday ? '#f0f0f0' : 'white'
-              }}
-            >
-              <div style={{ fontSize: '12px' }}>
+            <div key={index} style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              padding: '12px', minWidth: '60px',
+              border: day.isToday ? '1px solid #8B3A2A' : '1px solid transparent'
+            }}>
+              <p style={{fontSize: '11px', marginBottom: '8px'}}>
                 {day.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </div>
-              <div style={{ fontSize: '10px', marginTop: '4px' }}>
-                {day.phase}
-              </div>
-              <div style={{ fontSize: '10px', color: '#666' }}>
-                Day {day.dayInCycle}
-              </div>
+              </p>
+              <div style={{
+                width: '8px', height: '8px', borderRadius: '50%', marginBottom: '8px',
+                backgroundColor: day.phase === 'menstrual' ? '#8B3A2A' : day.phase === 'follicular' ? '#D4A574' : day.phase === 'ovulatory' ? '#F2EDE8' : '#4A3428'
+              }}/>
+              <p style={{fontSize: '11px', opacity: 0.6}}>{day.dayInCycle}</p>
             </div>
           ))}
         </div>
-      </section>
+
+      </div>
     </main>
   );
 }

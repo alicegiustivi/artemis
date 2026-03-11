@@ -2,3 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    background-color: #12100E;
+    color: #F2EDE8;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
